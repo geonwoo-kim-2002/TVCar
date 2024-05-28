@@ -1,0 +1,19 @@
+<launch>
+    <node pkg="calibration" type="calibration_node" name="calibration_code" output="screen">
+        <param name="fx" type="double" value="470.651460"/>
+        <param name="fy" type="double" value="470.534733"/>
+
+        <param name="cx" type="double" value="335.188454"/>
+        <param name="cy" type="double" value="255.051387"/>
+
+        <param name="skew_c" type="double" value="0.0"/>
+
+        <param name="theta_x" type="double" value="90.0"/>
+        <param name="theta_y" type="double" value="0.0"/>
+        <param name="theta_z" type="double" value="90.0"/>
+        
+        <param name="trans_x" type="double" value="-0.03"/>
+        <param name="trans_y" type="double" value="-0.01"/>
+        <param name="trans_z" type="double" value="-0.07"/>
+    </node>
+</launch>

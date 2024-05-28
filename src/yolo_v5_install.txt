@@ -1,0 +1,9 @@
+labeling
+install: https://github.com/HumanSignal/labelImg
+how to use: https://187cm.tistory.com/26
+
+train
+https://oceanlightai.tistory.com/22
+
+yolo ros
+https://github.com/mats-robotics/yolov5_ros
