@@ -31,6 +31,7 @@ controller::controller(ros::NodeHandle *nh_) : nh(nh_)
     pre_steering_ = 0.0;
     distance_ = 0.0;
     time_ = 0.0;
+    human_detect_ = false;
 }
 
 void controller::templidarCallback(const sensor_msgs::PointCloud2 &msg)
@@ -39,15 +40,20 @@ void controller::templidarCallback(const sensor_msgs::PointCloud2 &msg)
     pcl::fromROSMsg(msg, output_pointcloud);
     if (!(output_pointcloud.points.size() == 0))
     {
-
-        goal_.at(0) = output_pointcloud.points.at(0).x;
-        goal_.at(1) = output_pointcloud.points.at(0).y;
-        flag_ = true;
+        // int c_idx = output_pointcloud.size() / 2;
+        goal_.at(0) = (output_pointcloud.points.at(0).x + output_pointcloud.points.at(output_pointcloud.points.size() - 1).x) / 2;
+        goal_.at(1) = (output_pointcloud.points.at(0).y + output_pointcloud.points.at(output_pointcloud.points.size() - 1).y) / 2;
         distance_ = hypot(goal_.at(0),goal_.at(1));
+
+        flag_ = true;
+        human_detect_ = true;
+
+        std::cout << "x: " << goal_.at(0) << ", y: " << goal_.at(1) << std::endl;
     }
     else
     {
-        std::cout<<"Data Doesn't Come"<<std::endl;
+        std::cout<<"Human doesn't detect"<<std::endl;
+        human_detect_ = false;
     }
 }
 
@@ -126,45 +132,51 @@ void controller ::process()
 
     vehicle_yaw_ = 0;
 
-    if (flag_ == true)
+    if (flag_)
     {
         geometry_msgs::Twist cmd_vel;
 
-        change_goal_curr_pos_.at(0) = limit_dist_ * cos(vehicle_yaw_);
-        change_goal_curr_pos_.at(1) = limit_dist_ * sin(vehicle_yaw_);
+        if (human_detect_)
+        {
 
-        error_.at(0) = goal_.at(0) - change_goal_curr_pos_.at(0);
-        error_.at(1) = goal_.at(1) - change_goal_curr_pos_.at(1);
+            change_goal_curr_pos_.at(0) = limit_dist_ * cos(vehicle_yaw_);
+            change_goal_curr_pos_.at(1) = limit_dist_ * sin(vehicle_yaw_);
+
+            error_.at(0) = goal_.at(0) - change_goal_curr_pos_.at(0);
+            error_.at(1) = goal_.at(1) - change_goal_curr_pos_.at(1);
 
 
-        velocity_ = cos(vehicle_yaw_) * gain_.at(0) * error_.at(0) + sin(vehicle_yaw_) * gain_.at(1) * error_.at(1);
-        steering_ = 1 / c * (-sin(vehicle_yaw_) * gain_.at(0) * pre_.at(0) + cos(vehicle_yaw_) * gain_.at(1) * pre_.at(1));
+            velocity_ = cos(vehicle_yaw_) * gain_.at(0) * error_.at(0) + sin(vehicle_yaw_) * gain_.at(1) * error_.at(1);
+            // steering_ = 1 / c * (-sin(vehicle_yaw_) * gain_.at(0) * pre_.at(0) + cos(vehicle_yaw_) * gain_.at(1) * pre_.at(1));
+            steering_ = 1 / c * (-sin(vehicle_yaw_) * gain_.at(0) * error_.at(0) + cos(vehicle_yaw_) * gain_.at(1) * error_.at(1));
 
 
-        LimitPreInfo(pre_velocity_, pre_steering_, velocity_, steering_);
+            LimitPreInfo(pre_velocity_, pre_steering_, velocity_, steering_);
 
-        Saturation(velocity_, steering_);
+            Saturation(velocity_, steering_);
 
-        pre_velocity_ = velocity_;
-        pre_steering_ = steering_;
+            pre_velocity_ = velocity_;
+            pre_steering_ = steering_;
 
-        cmd_vel.linear.x = 2.5 * velocity_;
-        cmd_vel.angular.z = steering_;
+            cmd_vel.linear.x = 2.5 * velocity_;
+            cmd_vel.angular.z = steering_;
 
-        ROS_INFO("object angle : %2f", atan2(error_.at(1), error_.at(0)) * 180 / M_PI);
-        ROS_INFO("vel : %2f", cmd_vel.linear.x);
-        ROS_INFO("ang : %f\n", cmd_vel.angular.z * 180 / M_PI);
+            // ROS_INFO("object angle : %2f", atan2(error_.at(1), error_.at(0)) * 180 / M_PI);
+            // ROS_INFO("vel : %2f", cmd_vel.linear.x);
+            // ROS_INFO("ang : %f\n", cmd_vel.angular.z * 180 / M_PI);
+        }
+        else
+        {
+            cmd_vel.linear.x = 0;
+            cmd_vel.angular.z = 0.1;
+        }
 
         cmd_vel_publisher.publish(cmd_vel);
-
-        //flag_ = false;
     }
     else
     {
-        if (flag_ == false)
-        {
-            std::cout << "Lidar Data Doesn't come" << std::endl;
-        }
+
+        std::cout << "Lidar Data Doesn't come" << std::endl;
     }
 }
 controller::~controller()
@@ -178,10 +190,12 @@ int main(int argc, char **argv)
 
     controller kine(&nh);
 
+    ros::Rate spinRate(60);
     while (ros::ok())
     {
-        ros::spinOnce();
         kine.process();
+        ros::spinOnce();
+        spinRate.sleep();
     }
 
     // ros::spin();

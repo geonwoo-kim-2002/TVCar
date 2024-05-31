@@ -1,14 +1,16 @@
-#include "calibration/camera_calibration.h"
+#include "calibration/calibration.h"
 
 Calibration::Calibration()
 {
     cloud_sub = nh.subscribe("/cloud", 1, &Calibration::cloud_CB, this);
     image_sub = nh.subscribe("/usb_cam/image_raw", 1, &Calibration::image_CB, this);
+    yolo_sub = nh.subscribe("/darknet_ros/bounding_boxes", 1, &Calibration::yolo_CB, this);
 
     pcl_pub = nh.advertise<sensor_msgs::PointCloud2> ("human_cloud", 1);
 
     is_cloud = false;
     is_image = false;
+    is_yolo = false;
 
     ros::NodeHandle private_nh("~");
     private_nh.getParam("fx", fx);
@@ -129,20 +131,21 @@ void Calibration::showCalImage()
                 // circle(img, Point(img.cols - x, y), 1, CV_RGB(255,0,0));
                 circle(img, Point(x, y), 1, CV_RGB(dist_color, 255 - dist_color, 0));
 
-                human_bound.points.push_back(pcl_msg.points[i]);
-                count++;
-                cout << "angle: " << i / 4.0 - 135 << endl;
+                // cout << "angle: " << i / 4.0 - 135 << endl;
             }
             
-            // if ((x >= bounding_box && x < bounding_box) && (y >= bounding_box && y < bounding_box))
-            // {
-            //     // cout << pcl_msg.points[i].x << ", " << i << endl;
-            //     int dist_color = (pcl_msg.points[i].x - 0.2) * 800;
-            //     if(dist_color >= 255) dist_color = 255;
+            if (human_box.Class == "person" && (x >= human_box.xmin && x <= human_box.xmax) && (y >= human_box.ymin && y <= human_box.ymax))
+            {
+                // cout << pcl_msg.points[i].x << ", " << i << endl;
+                int dist_color = (pcl_msg.points[i].x - 0.2) * 800;
+                if(dist_color >= 255) dist_color = 255;
                 
-            //     // circle(img, Point(img.cols - x, y), 1, CV_RGB(255,0,0));
-            //     circle(img, Point(x, y), 1, CV_RGB(dist_color, 255- dist_color, 0));
-            // }
+                // circle(img, Point(img.cols - x, y), 1, CV_RGB(255,0,0));
+                circle(img, Point(x, y), 1, CV_RGB(dist_color, 255- dist_color, 0));
+
+                human_bound.points.push_back(pcl_msg.points[i]);
+                count++;
+            }
         }
         cout << "\n";
         sensor_msgs::PointCloud2 human_pub;
@@ -195,4 +198,102 @@ void Calibration::image_CB(const sensor_msgs::ImageConstPtr& image_msg)
     // cv::waitKey(2);
     // Output modified video stream
     // image_pub_.publish(cv_ptr->toImageMsg());
+}
+
+void Calibration::yolo_CB(const darknet_ros_msgs::BoundingBoxes &yolo_msg)
+{
+    is_yolo = true;
+    bounding_boxes = yolo_msg;
+
+    std::vector<int> human_idx;
+    
+    std::cout << "detect object number: " << bounding_boxes.bounding_boxes.size() << std::endl;
+
+    for(int i = 0;i < bounding_boxes.bounding_boxes.size();i++)
+    {
+        if (bounding_boxes.bounding_boxes[i].Class == "person")
+        {
+            human_idx.push_back(i);
+        }
+    }
+
+    if (human_idx.size() == 1)
+    {
+        human_box = bounding_boxes.bounding_boxes[human_idx[0]];
+        pre_human_box = human_box;
+    }
+    else if (human_idx.size() > 1)
+    {
+        int min_idx = 0;
+        double min_dis = DBL_MAX;
+
+        if (pre_human_box.Class != "")
+        {
+            int pre_center_x = (pre_human_box.xmin + pre_human_box.xmax) / 2;
+            int pre_center_y = (pre_human_box.ymin + pre_human_box.ymax) / 2;
+
+            for(int i = 0;i < human_idx.size();i++)
+            {
+                int center_x = (bounding_boxes.bounding_boxes[human_idx[i]].xmin + bounding_boxes.bounding_boxes[human_idx[i]].xmax) / 2;
+                int center_y = (bounding_boxes.bounding_boxes[human_idx[i]].ymin + bounding_boxes.bounding_boxes[human_idx[i]].ymax) / 2;
+                
+                double dis = hypot(center_x - pre_center_x, center_y - pre_center_y);
+                if (dis < min_dis)
+                {
+                    min_dis = dis;
+                    min_idx = human_idx[i];
+                }
+            }
+        }
+        else
+        {
+            min_idx = human_idx[0];
+        }
+
+        human_box = bounding_boxes.bounding_boxes[min_idx];
+        pre_human_box = human_box;
+    }
+    else
+    {
+        human_box.Class = "";
+        pre_human_box.Class = "";
+    }
+
+    // std::cout << "human class: " << human_box.Class << std::endl;
+    // if (pre_human_box.Class == "")
+    //     std::cout << "pre human class: " << pre_human_box.Class << std::endl;
+
+    // int center_x = (human_box.xmin + human_box.xmax) / 2;
+    // int center_y = (human_box.ymin + human_box.ymax) / 2;
+    // std::cout << "center x: " << center_x << ", " << "center y: " << center_y << endl; 
+}
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, "calibration_node");
+
+    ros::NodeHandle nh;
+
+    Calibration cal;
+
+    // Vector4d world;
+    // Vector3d pixel;
+
+    // world << 0, 0, 0, 1;
+
+    // pixel = cal.IntrinsicMatrix() * cal.ExtrinsicMatrix() * world;
+
+    // cout << pixel << "\n\n";
+    // cout << cal.IntrinsicMatrix() << "\n\n";
+    // cout << cal.ExtrinsicMatrix() << "\n\n";
+
+    ros::Rate spinRate(30);
+    while(ros::ok())
+    {
+        cal.Calibrate();
+        cal.showCalImage();
+        ros::spinOnce();
+        spinRate.sleep();
+    }
+    return 0;
 }

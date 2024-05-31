@@ -64,6 +64,8 @@ private:
     double distance_;
     double time_;
 
+    bool human_detect_;
+
 public:
     controller(ros::NodeHandle *nh_);
 

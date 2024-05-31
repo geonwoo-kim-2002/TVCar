@@ -1,7 +1,0 @@
-<launch>
- 
-  <node pkg="Libtorch_yolov5" type="Libtorch_yolov5" name="Libtorch_yolov5" output="screen" /> 
- 
-</launch>
-
-
