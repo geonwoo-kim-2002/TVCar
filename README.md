@@ -21,7 +21,6 @@
 3. Edit "CMakeLists.txt" to configure OpenCV and LibTorch correctly.
 
 4. Compile and run.
-
    ```shell
    cd ~ workspace/
    catkin build or catkin_make
@@ -30,7 +29,11 @@
    ```
 
 ### Bug fix
-  if 'AttributeError: module 'em' has no attribute 'RAW_OPT''
+  - `The CUDA compiler "/usr/bin/nvcc" is not able to compile a simple test program.`
+  add `set(CMAKE_CUDA_COMPILER "/usr/local/cuda-11.3/bin/nvcc")` in libtorch_yolov5/CMakeLists.txt
+
+
+  - `AttributeError: module 'em' has no attribute 'RAW_OPT'`
   
   ```shell
   pip3 install empy==3.3.4
