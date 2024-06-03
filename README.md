@@ -32,7 +32,7 @@
    - `The CUDA compiler "/usr/bin/nvcc" is not able to compile a simple test program.`<br>add `set(CMAKE_CUDA_COMPILER "/usr/local/cuda-11.3/bin/nvcc")` in libtorch_yolov5/CMakeLists.txt
 
 
-   - `AttributeError: module 'em' has no attribute 'RAW_OPT'`
+   - `AttributeError: module 'em' has no attribute 'RAW_OPT'`<br>
    ```shell
    pip3 install empy==3.3.4
    ```
