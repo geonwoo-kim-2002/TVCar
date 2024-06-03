@@ -30,6 +30,7 @@
 
 ### Bug fix
    - `The CUDA compiler "/usr/bin/nvcc" is not able to compile a simple test program.`
+   
    add `set(CMAKE_CUDA_COMPILER "/usr/local/cuda-11.3/bin/nvcc")` in libtorch_yolov5/CMakeLists.txt
 
 
