@@ -117,37 +117,96 @@ void Calibration::showCalImage()
         pcl::PointCloud<pcl::PointXYZ> human_bound;
         human_bound.points.clear();
         int count = 0;
+        vector<vector<int>> cluster_id;
+        vector<int> cluster;
         for(int i = 0;i < cal_pixel.size();i++)
         {
             int x = (int)cal_pixel[i][0];
             int y = (int)cal_pixel[i][1];
 
-            if ((x >= 0 && x < img.cols) && (y >= 0 && y < img.rows))
-            {
-                // cout << pcl_msg.points[i].x << ", " << i << endl;
-                int dist_color = (pcl_msg.points[i].x - 0.2) * 800;
-                if(dist_color >= 255) dist_color = 255;
-                
-                // circle(img, Point(img.cols - x, y), 1, CV_RGB(255,0,0));
-                circle(img, Point(x, y), 1, CV_RGB(dist_color, 255 - dist_color, 0));
+            if (pcl_msg.points[i].x > 0)
+            {    
+                if ((x >= 0 && x < img.cols) && (y >= 0 && y < img.rows))
+                {
+                    // cout << pcl_msg.points[i].x << ", " << i << endl;
+                    int dist_color = (pcl_msg.points[i].x - 0.2) * 100;
+                    if(dist_color >= 255) dist_color = 255;
+                    
+                    // circle(img, Point(img.cols - x, y), 1, CV_RGB(255,0,0));
+                    circle(img, Point(x, y), 1, CV_RGB(dist_color, 255 - dist_color, 0));
 
-                // cout << "angle: " << i / 4.0 - 135 << endl;
+                    // cout << "angle: " << i / 4.0 - 135 << endl;
+                }
+                
+                double box_center_x = (human_box.xmin + human_box.xmax) / 2;
+                double box_margin = 5.0;
+                if (human_box.Class == "person" && (x >= human_box.xmin && x <= human_box.xmax) && (y >= human_box.ymin && y <= human_box.ymax))
+                {
+                    if (cluster.empty())
+                    {
+                        cluster.push_back(i);
+                    }
+                    else
+                    {
+                        int pre_point = cluster[cluster.size() - 1];
+                        double dis = std::hypot(pcl_msg.points[i].x - pcl_msg.points[pre_point].x, pcl_msg.points[i].y - pcl_msg.points[pre_point].y);
+                        if (dis <= 0.1)
+                        {
+                            cluster.push_back(i);
+                        }
+                        else
+                        {
+                            cluster_id.push_back(cluster);
+                            cluster.clear();
+                            cluster.push_back(i);
+                        }
+                    }
+
+                    // cout << pcl_msg.points[i].x << ", " << i << endl;
+                    int dist_color = (pcl_msg.points[i].x - 0.2) * 100;
+                    if(dist_color >= 255) dist_color = 255;
+                    
+                    // circle(img, Point(img.cols - x, y), 1, CV_RGB(255,0,0));
+                    circle(img, Point(x, y), 1, CV_RGB(dist_color, 255- dist_color, 0));
+
+                    // human_bound.points.push_back(pcl_msg.points[i]);
+                    // count++;
+                }
             }
-            
-            if (human_box.Class == "person" && (x >= human_box.xmin && x <= human_box.xmax) && (y >= human_box.ymin && y <= human_box.ymax))
-            {
-                // cout << pcl_msg.points[i].x << ", " << i << endl;
-                int dist_color = (pcl_msg.points[i].x - 0.2) * 800;
-                if(dist_color >= 255) dist_color = 255;
-                
-                // circle(img, Point(img.cols - x, y), 1, CV_RGB(255,0,0));
-                circle(img, Point(x, y), 1, CV_RGB(dist_color, 255- dist_color, 0));
+        }
 
-                human_bound.points.push_back(pcl_msg.points[i]);
+        if (cluster_id.size() >= 1)
+        {
+            if (cluster.size() > 0)
+            {
+                cluster_id.push_back(cluster);
+            }
+            cout << cluster_id.size() << endl;
+
+            double min_dis = 100;
+            int min_id = 0;
+            for(int i = 0; i < cluster_id.size();i++)
+            {
+                int size = cluster_id[i].size();
+                double dis = std::hypot(pcl_msg.points[cluster_id[i][(int)(size / 2)]].x, pcl_msg.points[cluster_id[i][(int)(size / 2)]].y);
+                if (dis < min_dis)
+                {
+                    min_dis = dis;
+                    min_id = i;
+                }
+            }
+            cout << "min dis: " << min_dis << ", id: " << min_id << endl;
+            cout << "size: " << cluster_id[min_id].size() << endl;
+
+            for(int i = 0;i < cluster_id[min_id].size();i++)
+            {
+                human_bound.points.push_back(pcl_msg.points[cluster_id[min_id][i]]);
                 count++;
             }
         }
-        cout << "\n";
+
+
+        std::cout << "\n";
         sensor_msgs::PointCloud2 human_pub;
         pcl::toROSMsg(human_bound, human_pub);
         human_pub.header.frame_id = "cloud";

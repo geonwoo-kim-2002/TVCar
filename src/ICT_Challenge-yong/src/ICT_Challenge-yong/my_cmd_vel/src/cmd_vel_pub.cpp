@@ -168,7 +168,7 @@ void controller ::process()
         else
         {
             cmd_vel.linear.x = 0;
-            cmd_vel.angular.z = 0.1;
+            cmd_vel.angular.z = 0.5;
         }
 
         cmd_vel_publisher.publish(cmd_vel);

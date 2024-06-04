@@ -4,6 +4,7 @@ project(libtorch_yolov5)
 SET(CMAKE_BUILD_TYPE Release)
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+set(CMAKE_CUDA_COMPILER "/usr/local/cuda-11.3/bin/nvcc")
 add_compile_options(-std=c++14)
 
 find_package(catkin REQUIRED COMPONENTS 
@@ -17,7 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   darknet_ros_msgs
 )
 
-set(Torch_DIR ~/libtorch/share/cmake/Torch)
+set(Torch_DIR ~/Downloads/libtorch/share/cmake/Torch)
 #set(Torch_DIR /home/a/yolo_ws/src/libtorch-yolov5/libtorch/share/cmake/Torch)
 # set(Torch_DIR /home/a/yolo_ws/src/libtorch-yolov5/libtorch/share/cmake/Torch)
 set(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda-11.3)
