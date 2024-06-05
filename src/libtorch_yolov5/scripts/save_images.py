@@ -23,8 +23,8 @@ def imageCB(msg):
         if pre_ms > 750000 and now.microsecond < 200000: pre_ms = -200000
         if now.microsecond - pre_ms > 200000:
             pre_ms = now.microsecond
-            print(path + '/data/' + str(now.year) + '-' + str(now.month) + '-' + str(now.day) + "_" + str(now.hour) + ":" + str(now.minute) + ":" + str(now.second) + ":" + str(now.microsecond) + '.jpg')
-            save_path = path + '/data/' + str(now.year) + '-' + str(now.month) + '-' + str(now.day) + "_" + str(now.hour) + ":" + str(now.minute) + ":" + str(now.second) + ":" + str(now.microsecond) + '.jpg'
+            print(path + '/data/' + str(now.year) + '-' + str(now.month) + '-' + str(now.day) + "_" + str(now.hour) + str(now.minute) + str(now.second) + str(now.microsecond) + '.jpg')
+            save_path = path + '/data/' + str(now.year) + '-' + str(now.month) + '-' + str(now.day) + "_" + str(now.hour) + str(now.minute) + str(now.second) + str(now.microsecond) + '.jpg'
             cv2.imwrite(save_path, cv2_img)
             cv2.imshow("Viewer", cv2_img)
             cv2.waitKey(1)
