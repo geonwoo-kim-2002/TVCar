@@ -19,6 +19,7 @@ bridge = CvBridge()
 image = Image()
 human_box = BoundingBox()
 cmd_vel = Twist()
+pre_arduino = 's'
 
 def imageCB(msg):
     global image
@@ -33,7 +34,7 @@ def velCB(msg):
     cmd_vel = msg
 
 def detect(model, board):
-    global image, human_box, cmd_vel
+    global image, human_box, cmd_vel, pre_arduino
     try:
         cv2_img = bridge.imgmsg_to_cv2(image, "bgr8")
     except (CvBridgeError):
@@ -63,73 +64,111 @@ def detect(model, board):
                     y_center = (y1 + y2) / 2
                     if y_center >= height / 2 - 50 and y_center <= height / 2 + 50:
                         print("face in center")
-                        # arduino.write(b's')   # 아두이노에게  신호 보내기
-                        board.digital[3].write(1)
-                        board.digital[4].write(1)
-                        board.digital[5].write(1)
-                        board.digital[6].write(1)
-                        board.digital[7].write(1)
-                        time.sleep(0.1)
+                        # stop
+                        if pre_arduino == 'd':
+                            board.digital[3].write(0)
+                            board.digital[4].write(1)
+                            board.digital[5].write(1)
+                            board.digital[6].write(1)
+                            board.digital[7].write(1)
+                            time.sleep(0.5)
+                        elif pre_arduino == 'u':
+                            board.digital[3].write(1)
+                            board.digital[4].write(0)
+                            board.digital[5].write(1)
+                            board.digital[6].write(1)
+                            board.digital[7].write(1)
+                            time.sleep(0.5)
+                        else:
+                            board.digital[3].write(1)
+                            board.digital[4].write(1)
+                            board.digital[5].write(1)
+                            board.digital[6].write(1)
+                            board.digital[7].write(1)
+                            time.sleep(0.5)
+                        pre_arduino = 's'
                     elif y_center >= height / 2 + 50:
                         print("face in bottom")
-                        # arduino.write(b'd')  # 아두이노 시리얼 통신  # 아두이노에게 신호 보내기
+                        # down
                         board.digital[3].write(1)
                         board.digital[4].write(0)
                         board.digital[5].write(1)
                         board.digital[6].write(1)
                         board.digital[7].write(1)
-                        time.sleep(0.1)
+                        pre_arduino = 'd'
                     elif y_center <= height / 2 - 50:
                         print("face in top")
-                        # arduino.write(b'u')
+                        # up
                         board.digital[3].write(0)
                         board.digital[4].write(1)
                         board.digital[5].write(1)
                         board.digital[6].write(1)
                         board.digital[7].write(1)
-                        time.sleep(0.1)
+                        pre_arduino = 'u'
                 else:
                     if human_box.ymin < 5:
                         print("not detect and up")
-                        # arduino.write(b'u')
+                        # up
+                        board.digital[3].write(0)
+                        board.digital[4].write(1)
+                        board.digital[5].write(1)
+                        board.digital[6].write(1)
+                        board.digital[7].write(1)
+                        pre_arduino = 'u'
                     else:
-                        print("not detect and down")
-                        # arduino.write(b'd')                        
+                        print("not detect and down")  
+                        # down
+                        board.digital[3].write(1)
+                        board.digital[4].write(0)
+                        board.digital[5].write(1)
+                        board.digital[6].write(1)
+                        board.digital[7].write(1)
+                        pre_arduino = 'd'                     
 
             except:
                 print(bboxes)
                 print(len(bboxes[0]))
         else:
             print("robot moving")
-            # arduino.write(b's')
+            # stop
+            if pre_arduino == 'd':
+                board.digital[3].write(0)
+                board.digital[4].write(1)
+                board.digital[5].write(1)
+                board.digital[6].write(1)
+                board.digital[7].write(1)
+                time.sleep(0.5)
+            elif pre_arduino == 'u':
+                board.digital[3].write(1)
+                board.digital[4].write(0)
+                board.digital[5].write(1)
+                board.digital[6].write(1)
+                board.digital[7].write(1)
+                time.sleep(0.5)
+            else:
+                board.digital[3].write(1)
+                board.digital[4].write(1)
+                board.digital[5].write(1)
+                board.digital[6].write(1)
+                board.digital[7].write(1)
+                time.sleep(0.5)
+            pre_arduino = 's'
         
         cv2.imshow('detect face', cv2_img)
         cv2.waitKey(1)
-    # k = cv2.waitKey(10) & 0xff  # Press 'ESC' for exiting video
-    # if k == 27:
-    #     break
-    # Cleanup
-    # cam.release
 
 if __name__ == '__main__':
     rospy.init_node("detect_face")
 
-    subimg = rospy.Subscriber("/usb_cam/image_raw", Image, imageCB, queue_size=1)
+    subimg = rospy.Subscriber("/usb_cam/image_raw1", Image, imageCB, queue_size=1)
     subyolo = rospy.Subscriber("human_box", BoundingBox, yoloCB, queue_size=1)
     subvel = rospy.Subscriber("cmd_vel", Twist, velCB, queue_size=1)
 
-    # 아두이노 시리얼 연결
-    # arduino = serial.Serial('/dev/ttyACM0', 9600)  # 아두이노가 연결된 포트. 확인 후 변경 필요.
     board = pyfirmata.Arduino('/dev/ttyACM0')
 
     rospack = rospkg.RosPack()
     path = rospack.get_path('detect_face')
 
-    # recognizer = cv2.face.LBPHFaceRecognizer_create()
-    # recognizer.read('/home/a/capstone/trainer/trainer_0.yml')
-    # cascadePath = path + "/data/haarcascade_frontalface_default.xml"
-    # print(cascadePath)
-    # faceCascade = cv2.CascadeClassifier(cascadePath)
     model = YoloDetector(target_size=640, device="cuda:0", min_face=90)
     
     board.digital[3].write(1)
@@ -138,25 +177,7 @@ if __name__ == '__main__':
     board.digital[6].write(1)
     board.digital[7].write(1)
     
-    rate = rospy.Rate(10)
+    rate = rospy.Rate(30)
     while not rospy.is_shutdown():
         detect(model, board)
-        # board.digital[3].write(1)
-        # board.digital[4].write(1)
-        # board.digital[5].write(1)
-        # board.digital[6].write(1)
-        # board.digital[7].write(1)
-        # time.sleep(1.0)
-
-        # board.digital[3].write(1)
-        # board.digital[4].write(0)
-        # board.digital[5].write(1)
-        # board.digital[6].write(1)
-        # board.digital[7].write(1)
-        # time.sleep(0.1)
         rate.sleep()
-
-    # arduino.flush()
-    # arduino.close()  # 아두이노 연결 종료
-    print("\n [INFO] Exiting Program and cleanup stuff")
-    
