@@ -173,10 +173,10 @@ void Calibration::showCalImage()
                     // human_bound.points.push_back(pcl_msg.points[i]);
                     // count++;
 
-                    rectangle(img, Point(human_box.xmin, human_box.ymin), Point(human_box.xmax, human_box.ymax), CV_RGB(0, 255, 0), 3);
                 }
             }
         }
+        rectangle(img, Point(human_box.xmin, human_box.ymin), Point(human_box.xmax, human_box.ymax), CV_RGB(0, 255, 0), 3);
 
         if (cluster_id.size() >= 1)
         {
