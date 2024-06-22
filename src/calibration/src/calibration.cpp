@@ -7,6 +7,7 @@ Calibration::Calibration()
     yolo_sub = nh.subscribe("/darknet_ros/bounding_boxes", 1, &Calibration::yolo_CB, this);
 
     pcl_pub = nh.advertise<sensor_msgs::PointCloud2> ("human_cloud", 1);
+    human_box_pub = nh.advertise<darknet_ros_msgs::BoundingBox> ("human_box", 1);
 
     is_cloud = false;
     is_image = false;
@@ -163,14 +164,16 @@ void Calibration::showCalImage()
                     }
 
                     // cout << pcl_msg.points[i].x << ", " << i << endl;
-                    int dist_color = (pcl_msg.points[i].x - 0.2) * 100;
-                    if(dist_color >= 255) dist_color = 255;
+                    // int dist_color = (pcl_msg.points[i].x - 0.2) * 100;
+                    // if(dist_color >= 255) dist_color = 255;
                     
                     // circle(img, Point(img.cols - x, y), 1, CV_RGB(255,0,0));
-                    circle(img, Point(x, y), 1, CV_RGB(dist_color, 255- dist_color, 0));
+                    // circle(img, Point(x, y), 1, CV_RGB(dist_color, 255- dist_color, 0));
 
                     // human_bound.points.push_back(pcl_msg.points[i]);
                     // count++;
+
+                    rectangle(img, Point(human_box.xmin, human_box.ymin), Point(human_box.xmax, human_box.ymax), CV_RGB(0, 255, 0), 3);
                 }
             }
         }
@@ -318,6 +321,7 @@ void Calibration::yolo_CB(const darknet_ros_msgs::BoundingBoxes &yolo_msg)
         pre_human_box.Class = "";
     }
 
+    human_box_pub.publish(human_box);
     // std::cout << "human class: " << human_box.Class << std::endl;
     // if (pre_human_box.Class == "")
     //     std::cout << "pre human class: " << pre_human_box.Class << std::endl;

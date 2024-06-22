@@ -47,6 +47,7 @@ private:
     
 
     ros::Publisher pcl_pub;
+    ros::Publisher human_box_pub;
     
     double fx;
     double fy;
