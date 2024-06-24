@@ -23,7 +23,7 @@
         // "preLaunchTask": "build package only",
         "preLaunchTask": "build all packages",
         // "preLaunchTask": "release",
-        "target": "/home/a/jol_ws/src/libtorch_yolov5/launch/Libtorch_yolov5.launch"
+        "target": "/home/a/TVCar/src/libtorch_yolov5/launch/Libtorch_yolov5.launch"
       }
     ]
 }

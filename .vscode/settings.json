@@ -73,6 +73,7 @@
         "variant": "cpp",
         "strstream": "cpp",
         "bit": "cpp",
-        "typeindex": "cpp"
+        "typeindex": "cpp",
+        "regex": "cpp"
     }
 }

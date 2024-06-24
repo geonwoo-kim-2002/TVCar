@@ -141,7 +141,7 @@ void Calibration::showCalImage()
                 
                 double box_center_x = (human_box.xmin + human_box.xmax) / 2;
                 double box_margin = 5.0;
-                if (human_box.Class == "person" && (x >= human_box.xmin && x <= human_box.xmax) && (y >= human_box.ymin && y <= human_box.ymax))
+                if (human_box.Class == "person" && (x >= human_box.xmin - 50 && x <= human_box.xmax + 50) && (y >= human_box.ymin && y <= human_box.ymax))
                 {
                     if (cluster.empty())
                     {
@@ -282,7 +282,7 @@ void Calibration::yolo_CB(const darknet_ros_msgs::BoundingBoxes &yolo_msg)
 
     if (human_idx.size() == 1)
     {
-        if (bounding_boxes.bounding_boxes[human_idx[0]].probability > 0.5)
+        if (bounding_boxes.bounding_boxes[human_idx[0]].probability > 0.4)
         {
             human_box = bounding_boxes.bounding_boxes[human_idx[0]];
             pre_human_box = human_box;
@@ -296,29 +296,38 @@ void Calibration::yolo_CB(const darknet_ros_msgs::BoundingBoxes &yolo_msg)
     else if (human_idx.size() > 1)
     {
         int min_idx = 0;
-        double min_dis = DBL_MAX;
+        double min_dis = 0;
 
-        if (pre_human_box.Class != "")
-        {
-            int pre_center_x = (pre_human_box.xmin + pre_human_box.xmax) / 2;
-            int pre_center_y = (pre_human_box.ymin + pre_human_box.ymax) / 2;
+        // if (pre_human_box.Class != "")
+        // {
+        //     int pre_center_x = (pre_human_box.xmin + pre_human_box.xmax) / 2;
+        //     int pre_center_y = (pre_human_box.ymin + pre_human_box.ymax) / 2;
 
-            for(int i = 0;i < human_idx.size();i++)
-            {
-                int center_x = (bounding_boxes.bounding_boxes[human_idx[i]].xmin + bounding_boxes.bounding_boxes[human_idx[i]].xmax) / 2;
-                int center_y = (bounding_boxes.bounding_boxes[human_idx[i]].ymin + bounding_boxes.bounding_boxes[human_idx[i]].ymax) / 2;
+        //     for(int i = 0;i < human_idx.size();i++)
+        //     {
+        //         int center_x = (bounding_boxes.bounding_boxes[human_idx[i]].xmin + bounding_boxes.bounding_boxes[human_idx[i]].xmax) / 2;
+        //         int center_y = (bounding_boxes.bounding_boxes[human_idx[i]].ymin + bounding_boxes.bounding_boxes[human_idx[i]].ymax) / 2;
                 
-                double dis = hypot(center_x - pre_center_x, center_y - pre_center_y);
-                if (dis < min_dis)
-                {
-                    min_dis = dis;
-                    min_idx = human_idx[i];
-                }
-            }
-        }
-        else
+        //         double dis = hypot(center_x - pre_center_x, center_y - pre_center_y);
+        //         if (dis < min_dis)
+        //         {
+        //             min_dis = dis;
+        //             min_idx = human_idx[i];
+        //         }
+        //     }
+        // }
+        // else
+        // {
+        //     min_idx = human_idx[0];
+        // }
+        for(int i = 0;i < human_idx.size();i++)
         {
-            min_idx = human_idx[0];
+            double dis = (bounding_boxes.bounding_boxes[human_idx[i]].xmax - bounding_boxes.bounding_boxes[human_idx[i]].xmin) * (bounding_boxes.bounding_boxes[human_idx[i]].ymax - bounding_boxes.bounding_boxes[human_idx[i]].ymin);
+            if (dis > min_dis)
+            {
+                min_dis = dis;
+                min_idx = human_idx[i];
+            }
         }
 
         human_box = bounding_boxes.bounding_boxes[min_idx];

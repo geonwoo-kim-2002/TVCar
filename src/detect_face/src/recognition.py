@@ -16,7 +16,7 @@ bridge = CvBridge()
 image = Image()
 human_box = BoundingBox()
 cmd_vel = Twist()
-pre_arduino = 's'
+pre_arduino = 'd'
 
 def imageCB(msg):
     global image
@@ -42,7 +42,7 @@ def detect(model, board):
         bboxes,points = model.predict(cv2_img)
         # print(bboxes[0][0][0], bboxes[0][0][1])
 
-        if abs(cmd_vel.angular.z) < 0.1 and abs(cmd_vel.linear.x) < 0.1:
+        if abs(cmd_vel.angular.z) < 0.15 and abs(cmd_vel.linear.x) < 0.1:
             try:
                 if len(bboxes[0]) > 0:
                     x1 = bboxes[0][0][0]
@@ -59,7 +59,7 @@ def detect(model, board):
                     cv2.rectangle(cv2_img, (x1, y1), (x2, y2), (0, 255, 0), 2)
 
                     y_center = (y1 + y2) / 2
-                    if y_center >= height / 2 - 50 and y_center <= height / 2 + 50:
+                    if y_center >= height / 2 - 10 and y_center <= height / 2 + 20:
                         print("face in center")
                         # stop
                         if pre_arduino == 'd':
@@ -87,40 +87,108 @@ def detect(model, board):
                     elif y_center >= height / 2:
                         print("face in bottom")
                         # down
-                        board.digital[3].write(1)
-                        board.digital[4].write(0)
-                        board.digital[5].write(1)
-                        board.digital[6].write(1)
-                        board.digital[7].write(1)
-                        pre_arduino = 'd'
+                        if pre_arduino == 'u':
+                            board.digital[3].write(1)
+                            board.digital[4].write(0)
+                            board.digital[5].write(1)
+                            board.digital[6].write(1)
+                            board.digital[7].write(1)
+                            time.sleep(0.5)
+                            pre_arduino = 's'
+                        elif pre_arduino == 's':
+                            board.digital[3].write(1)
+                            board.digital[4].write(1)
+                            board.digital[5].write(1)
+                            board.digital[6].write(1)
+                            board.digital[7].write(1)
+                            time.sleep(0.5)
+                            pre_arduino = 'd'
+                        else:
+                            board.digital[3].write(1)
+                            board.digital[4].write(0)
+                            board.digital[5].write(1)
+                            board.digital[6].write(1)
+                            board.digital[7].write(1)
+                            pre_arduino = 'd'
                     elif y_center <= height / 2 - 50:
                         print("face in top")
                         # up
-                        board.digital[3].write(0)
-                        board.digital[4].write(1)
-                        board.digital[5].write(1)
-                        board.digital[6].write(1)
-                        board.digital[7].write(1)
-                        pre_arduino = 'u'
+                        if pre_arduino == 'd':
+                            board.digital[3].write(0)
+                            board.digital[4].write(1)
+                            board.digital[5].write(1)
+                            board.digital[6].write(1)
+                            board.digital[7].write(1)
+                            time.sleep(0.5)
+                            pre_arduino = 's'
+                        elif pre_arduino == 's':
+                            board.digital[3].write(1)
+                            board.digital[4].write(1)
+                            board.digital[5].write(1)
+                            board.digital[6].write(1)
+                            board.digital[7].write(1)
+                            time.sleep(0.5)
+                            pre_arduino = 'u'
+                        else:
+                            board.digital[3].write(0)
+                            board.digital[4].write(1)
+                            board.digital[5].write(1)
+                            board.digital[6].write(1)
+                            board.digital[7].write(1)
+                            pre_arduino = 'u'
                 else:
                     if human_box.ymin < 5:
                         print("not detect and up")
-                        # up
-                        board.digital[3].write(0)
-                        board.digital[4].write(1)
-                        board.digital[5].write(1)
-                        board.digital[6].write(1)
-                        board.digital[7].write(1)
-                        pre_arduino = 'u'
+                        # down
+                        if pre_arduino == 'u':
+                            board.digital[3].write(1)
+                            board.digital[4].write(0)
+                            board.digital[5].write(1)
+                            board.digital[6].write(1)
+                            board.digital[7].write(1)
+                            time.sleep(0.5)
+                            pre_arduino = 's'
+                        elif pre_arduino == 's':
+                            board.digital[3].write(1)
+                            board.digital[4].write(1)
+                            board.digital[5].write(1)
+                            board.digital[6].write(1)
+                            board.digital[7].write(1)
+                            time.sleep(0.5)
+                            pre_arduino = 'd'
+                        else:
+                            board.digital[3].write(1)
+                            board.digital[4].write(0)
+                            board.digital[5].write(1)
+                            board.digital[6].write(1)
+                            board.digital[7].write(1)
+                            pre_arduino = 'd'
                     else:
                         print("not detect and down")  
                         # down
-                        board.digital[3].write(1)
-                        board.digital[4].write(0)
-                        board.digital[5].write(1)
-                        board.digital[6].write(1)
-                        board.digital[7].write(1)
-                        pre_arduino = 'd'                     
+                        if pre_arduino == 'u':
+                            board.digital[3].write(1)
+                            board.digital[4].write(0)
+                            board.digital[5].write(1)
+                            board.digital[6].write(1)
+                            board.digital[7].write(1)
+                            time.sleep(0.5)
+                            pre_arduino = 's'
+                        elif pre_arduino == 's':
+                            board.digital[3].write(1)
+                            board.digital[4].write(1)
+                            board.digital[5].write(1)
+                            board.digital[6].write(1)
+                            board.digital[7].write(1)
+                            time.sleep(0.5)
+                            pre_arduino = 'd'
+                        else:
+                            board.digital[3].write(1)
+                            board.digital[4].write(0)
+                            board.digital[5].write(1)
+                            board.digital[6].write(1)
+                            board.digital[7].write(1)
+                            pre_arduino = 'd'                   
 
             except:
                 print(bboxes)
@@ -166,16 +234,18 @@ if __name__ == '__main__':
     rospack = rospkg.RosPack()
     path = rospack.get_path('detect_face')
 
-    model = YoloDetector(target_size=640, device="cuda:0", min_face=90)
+    model = YoloDetector(target_size=640, device="cuda:0", min_face=40)
     
     board.digital[3].write(1)
     board.digital[4].write(1)
     board.digital[5].write(1)
     board.digital[6].write(1)
     board.digital[7].write(1)
+    time.sleep(0.5)
     
     rate = rospy.Rate(30)
     while not rospy.is_shutdown():
         detect(model, board)
         # detect(model, 0)
+        time.sleep(0.5)
         rate.sleep()

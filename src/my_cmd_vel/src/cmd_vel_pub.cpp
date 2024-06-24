@@ -81,24 +81,24 @@ void controller::messageCallback(const nav_msgs::Odometry &msg)
     curr_vel_.at(1) = msg.twist.twist.angular.z; // rad/s
 }
 
-void controller ::Saturation(double &vel, double &steering)
+void controller::Saturation(double &vel, double &steering)
 {
-    if (vel > 1.5)
+    if (vel > 1.0)
     {
-        vel = 1.5;
+        vel = 1.0;
     }
     else if (vel < 0)
     {
         vel = 0;
     }
 
-    if (steering > 0.60)
+    if (steering > 0.6)
     {
-        steering = 0.60;
+        steering = 0.6;
     }
-    else if (steering < -0.60)
+    else if (steering < -0.6)
     {
-        steering = -0.60;
+        steering = -0.6;
     }
 }
 
@@ -113,13 +113,13 @@ void controller::LimitPreInfo(const double &pre_vel, const double &pre_steering,
         vel = pre_vel - 1.0;
     }
 
-    if (steering > pre_steering + 0.1)
+    if (steering > pre_steering + 0.05)
     {
-        steering = pre_steering + 0.1;
+        steering = pre_steering + 0.05;
     }
-    else if (steering < pre_steering - 0.1)
+    else if (steering < pre_steering - 0.05)
     {
-        steering = pre_steering - 0.1;
+        steering = pre_steering - 0.05;
     }
 }
 
@@ -158,12 +158,13 @@ void controller ::process()
         {
             velocity_ = 0;
             if (goal_.at(1) > 0)
-                steering_ = 0.2;
+                steering_ = 0.3;
             else
-                steering_ = -0.2;
+                steering_ = -0.3;
         }
 
         LimitPreInfo(pre_velocity_, pre_steering_, velocity_, steering_);
+        Saturation(velocity_, steering_);
         cmd_vel.linear.x = min(1.0 * velocity_, 1.0);
         cmd_vel.angular.z = max(min(steering_, 0.6), -0.6);
         cmd_vel_publisher.publish(cmd_vel);
