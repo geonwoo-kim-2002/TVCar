@@ -1,0 +1,29 @@
+// {
+//   "version": "0.2.0",
+//   "configurations": [
+//       {
+//            "name": "ROS: Launch",
+//           "type": "ros",2
+//           "request": "launch",2
+//           "target": "${workspaceFolder}/src/MPCcontroller/launch/mpc.launch", // <<< Configure path to your launch file
+//           "preLaunchTask": "make_debug", // <<< This is the task that will run before debugging staself.racecar_env.init_maprts
+//       }
+//   ]
+// }
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "libtorch_yolov5",
+        "type": "ros",
+        "request": "launch",
+        // "preLaunchTask": "build package only",
+        "preLaunchTask": "build all packages",
+        // "preLaunchTask": "release",
+        "target": "/home/a/jol_ws/src/libtorch_yolov5/launch/Libtorch_yolov5.launch"
+      }
+    ]
+}
