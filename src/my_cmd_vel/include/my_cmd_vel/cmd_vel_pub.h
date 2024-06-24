@@ -29,6 +29,8 @@
 
 #include <std_msgs/String.h>
 
+using namespace std;
+
 class controller{
 private:
     ros::NodeHandle *nh;

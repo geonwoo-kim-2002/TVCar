@@ -45,7 +45,6 @@ void controller::templidarCallback(const sensor_msgs::PointCloud2 &msg)
         goal_.at(1) = (output_pointcloud.points.at(0).y + output_pointcloud.points.at(output_pointcloud.points.size() - 1).y) / 2;
         distance_ = hypot(goal_.at(0),goal_.at(1));
 
-        flag_ = true;
         human_detect_ = true;
 
         std::cout << "x: " << goal_.at(0) << ", y: " << goal_.at(1) << std::endl;
@@ -55,6 +54,7 @@ void controller::templidarCallback(const sensor_msgs::PointCloud2 &msg)
         std::cout<<"Human doesn't detect"<<std::endl;
         human_detect_ = false;
     }
+    flag_ = true;
 }
 
 void controller::prelidarCallback(const sensor_msgs::PointCloud2 &msg)
@@ -104,9 +104,9 @@ void controller ::Saturation(double &vel, double &steering)
 
 void controller::LimitPreInfo(const double &pre_vel, const double &pre_steering, double &vel, double &steering)
 {
-    if (vel > pre_vel + 1.5)
+    if (vel > pre_vel + 0.01)
     {
-        vel = pre_vel + 1.5;
+        vel = pre_vel + 0.01;
     }
     else if (vel < pre_vel - 1.0)
     {
@@ -150,28 +150,27 @@ void controller ::process()
             // steering_ = 1 / c * (-sin(vehicle_yaw_) * gain_.at(0) * pre_.at(0) + cos(vehicle_yaw_) * gain_.at(1) * pre_.at(1));
             steering_ = 1 / c * (-sin(vehicle_yaw_) * gain_.at(0) * error_.at(0) + cos(vehicle_yaw_) * gain_.at(1) * error_.at(1));
 
-
-            LimitPreInfo(pre_velocity_, pre_steering_, velocity_, steering_);
-
-            Saturation(velocity_, steering_);
-
-            pre_velocity_ = velocity_;
-            pre_steering_ = steering_;
-
-            cmd_vel.linear.x = 2.5 * velocity_;
-            cmd_vel.angular.z = steering_;
-
             // ROS_INFO("object angle : %2f", atan2(error_.at(1), error_.at(0)) * 180 / M_PI);
             // ROS_INFO("vel : %2f", cmd_vel.linear.x);
             // ROS_INFO("ang : %f\n", cmd_vel.angular.z * 180 / M_PI);
         }
         else
         {
-            cmd_vel.linear.x = 0;
-            cmd_vel.angular.z = 0.5;
+            velocity_ = 0;
+            if (goal_.at(1) > 0)
+                steering_ = 0.2;
+            else
+                steering_ = -0.2;
         }
 
+        LimitPreInfo(pre_velocity_, pre_steering_, velocity_, steering_);
+        cmd_vel.linear.x = min(1.0 * velocity_, 1.0);
+        cmd_vel.angular.z = max(min(steering_, 0.6), -0.6);
         cmd_vel_publisher.publish(cmd_vel);
+        ROS_INFO("vel : %2f", cmd_vel.linear.x);
+        ROS_INFO("ang : %f\n", cmd_vel.angular.z * 180 / M_PI);
+        pre_velocity_ = velocity_;
+        pre_steering_ = steering_;
     }
     else
     {

@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 import cv2
-import numpy as np
-import os
-import serial
 import time
 import pyfirmata
 
@@ -87,7 +84,7 @@ def detect(model, board):
                             board.digital[7].write(1)
                             time.sleep(0.5)
                         pre_arduino = 's'
-                    elif y_center >= height / 2 + 50:
+                    elif y_center >= height / 2:
                         print("face in bottom")
                         # down
                         board.digital[3].write(1)
@@ -160,7 +157,7 @@ def detect(model, board):
 if __name__ == '__main__':
     rospy.init_node("detect_face")
 
-    subimg = rospy.Subscriber("/usb_cam/image_raw1", Image, imageCB, queue_size=1)
+    subimg = rospy.Subscriber("/usb_cam1/image_raw", Image, imageCB, queue_size=1)
     subyolo = rospy.Subscriber("human_box", BoundingBox, yoloCB, queue_size=1)
     subvel = rospy.Subscriber("cmd_vel", Twist, velCB, queue_size=1)
 
@@ -180,4 +177,5 @@ if __name__ == '__main__':
     rate = rospy.Rate(30)
     while not rospy.is_shutdown():
         detect(model, board)
+        # detect(model, 0)
         rate.sleep()

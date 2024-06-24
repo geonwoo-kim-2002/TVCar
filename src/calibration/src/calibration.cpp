@@ -176,7 +176,8 @@ void Calibration::showCalImage()
                 }
             }
         }
-        rectangle(img, Point(human_box.xmin, human_box.ymin), Point(human_box.xmax, human_box.ymax), CV_RGB(0, 255, 0), 3);
+        if (human_box.Class == "person")
+            rectangle(img, Point(human_box.xmin, human_box.ymin), Point(human_box.xmax, human_box.ymax), CV_RGB(0, 255, 0), 3);
 
         if (cluster_id.size() >= 1)
         {
@@ -184,7 +185,7 @@ void Calibration::showCalImage()
             {
                 cluster_id.push_back(cluster);
             }
-            cout << cluster_id.size() << endl;
+            // cout << cluster_id.size() << endl;
 
             double min_dis = 100;
             int min_id = 0;
@@ -198,8 +199,8 @@ void Calibration::showCalImage()
                     min_id = i;
                 }
             }
-            cout << "min dis: " << min_dis << ", id: " << min_id << endl;
-            cout << "size: " << cluster_id[min_id].size() << endl;
+            // cout << "min dis: " << min_dis << ", id: " << min_id << endl;
+            // cout << "size: " << cluster_id[min_id].size() << endl;
 
             for(int i = 0;i < cluster_id[min_id].size();i++)
             {
@@ -209,7 +210,7 @@ void Calibration::showCalImage()
         }
 
 
-        std::cout << "\n";
+        // std::cout << "\n";
         sensor_msgs::PointCloud2 human_pub;
         pcl::toROSMsg(human_bound, human_pub);
         human_pub.header.frame_id = "cloud";
@@ -220,7 +221,7 @@ void Calibration::showCalImage()
         //     std::cout << human_bound.points[i].
         // }
 
-        cv::imshow("OPENCV_WINDOW", img);
+        cv::imshow("calibration", img);
         cv::waitKey(2);
     }
 }
@@ -269,7 +270,7 @@ void Calibration::yolo_CB(const darknet_ros_msgs::BoundingBoxes &yolo_msg)
 
     std::vector<int> human_idx;
     
-    std::cout << "detect object number: " << bounding_boxes.bounding_boxes.size() << std::endl;
+    // std::cout << "detect object number: " << bounding_boxes.bounding_boxes.size() << std::endl;
 
     for(int i = 0;i < bounding_boxes.bounding_boxes.size();i++)
     {
@@ -281,8 +282,16 @@ void Calibration::yolo_CB(const darknet_ros_msgs::BoundingBoxes &yolo_msg)
 
     if (human_idx.size() == 1)
     {
-        human_box = bounding_boxes.bounding_boxes[human_idx[0]];
-        pre_human_box = human_box;
+        if (bounding_boxes.bounding_boxes[human_idx[0]].probability > 0.5)
+        {
+            human_box = bounding_boxes.bounding_boxes[human_idx[0]];
+            pre_human_box = human_box;
+        }
+        else
+        {
+            human_box.Class = "";
+            pre_human_box.Class = "";
+        }
     }
     else if (human_idx.size() > 1)
     {
@@ -320,7 +329,10 @@ void Calibration::yolo_CB(const darknet_ros_msgs::BoundingBoxes &yolo_msg)
         human_box.Class = "";
         pre_human_box.Class = "";
     }
-
+    if (human_box.Class == "person")
+        cout << "human probability: " << human_box.probability << endl;
+    else
+        cout << "no human" << endl;
     human_box_pub.publish(human_box);
     // std::cout << "human class: " << human_box.Class << std::endl;
     // if (pre_human_box.Class == "")
