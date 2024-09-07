@@ -5,7 +5,7 @@
 - LibTorch 1.12.1+cu113
 - CUDA 11.3
 
-## Getting Started YOLO
+## Getting Started
 
 1. Install Package.
    ```shell
